@@ -12,7 +12,8 @@ The utility class uses a CBC mode encryption along with AES standard to provide 
 * Integrate(include)
 * File Support
 * Cryptography Algorithms
-* C++ Pseudo Examples
+* C++ Examples
+* Unit Testing
 
 ## CLI Execution Flags
 You can Supply various flags to directly instruct the operation on how to execute, some of these flags are:
@@ -301,3 +302,11 @@ int main(int argc, char **argv)
 
 ```
 
+## Unit Testing
+
+For a quick test, there is a special static member function named `CreateTestDirectory`, which will create a test directory, and some files to test encryption.
+> the directory must not exists or test will fail, you can supply how many files you want with init-list argument, here creating a test directory with 2 files, the files will contain a trivial buffer, just for testint purposes.
+```cpp
+// this will return the full path of the directory if successfully created, an empty string otherwise, you can use it's value for later operations like target supply.
+const String_t create_test_dir = Crypto::CreateTestDirectory("/path/to/test/dir", {"file1.txt", "file2.txt"}); 
+```
