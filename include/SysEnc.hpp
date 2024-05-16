@@ -5,7 +5,7 @@
 typedef long long int int64_t;
 typedef unsigned long long int uint64_t;
 #endif
-
+ 
 // Check if compiler supports char16_t and char32_t
 #if !defined(__cplusplus) && (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 201112L))
 typedef unsigned short char16_t;
@@ -320,6 +320,7 @@ class Crypto
     [[maybe_unused, nodiscard]] inline static const bool CreateBackup(const StringView_t &target);
     [[nodiscard]] static const std::vector<System::String_t> DirectoryAggregation(const StringView_t &target);
     [[nodiscard]] static const bool Rename(const System::StringView_t &file_name, const bool byte_plus) __attribute__((hot));
+    [[maybe_unused, nodiscard]] inline static const String_t CreateTestDirectory(const StringView_t &dir_path, const std::initializer_list<String_t> test_files);
 
     // Supplier Region
     [[maybe_unused]] inline static void SetRecoveryMode(void) noexcept;

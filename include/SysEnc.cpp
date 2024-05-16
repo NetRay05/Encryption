@@ -3,7 +3,7 @@
 // header guarding
 #ifndef __SYSTEM_ENCRYPTION_FF__
 #include "SysEnc.hpp"
-
+ 
 // double check for namespace macro definition validation
 #if defined(__SYSTEM_ENCRYPTION_FF__)
 
@@ -436,27 +436,75 @@ template <typename mT, typename... tArgs> void System::Crypto::LogError(mT msg, 
     return true;
 };
 
+/**
+ * Create a test directory with a list of files from test_files list, test_files entries must only contain file name without path, 
+ * and the dir_path value must be an absolute path to the test directory to create.
+ * For example, dir_path = "/path/to/dir/test" and test_file = {"file1.txt", "file2.txt", ...}
+ * @param const StringView_t& the directory path
+ * @param const std::initializer_list<String_t> list of files to create into dir_path
+ * @returns const bool if test directory was created or not
+*/
+[[maybe_unused, nodiscard]] const System::String_t System::Crypto::CreateTestDirectory(const StringView_t &dir_path, const std::initializer_list<String_t> test_files) {
+    String_t rVal;
+    if (dir_path.empty())
+    {
+        LogWarning("Test Directory is empty!\n");
+        return rVal;
+    }
+    if(test_files.size() == 0){
+        LogWarning("File list is empty, no files will be created..\n");
+    }
+    if(DirectoryExists(dir_path)){
+        LogWarning("Directory already exists!\n");
+        return rVal;
+    }
+    std::filesystem::create_directories(std::move(dir_path.data())) || std::filesystem::create_directory(std::move(dir_path.data()));
+    if(DirectoryExists(dir_path.data())){
+        for(const String_t &new_file: test_files){
+            if(new_file.compare(".") == 0 || new_file.compare("..") == 0)
+                continue;
+
+            String_t entry_id = dir_path.data();
+            entry_id += PATH_SEPARATOR;
+            entry_id += std::move(new_file.c_str());
+            LogMessage("Creating test file <", entry_id, ">...\n");
+            std::ofstream createFile(entry_id.c_str());
+            createFile << "Something in this file";
+            createFile.close();
+            if(FileExists(std::move(entry_id.c_str()))){
+                LogMessage("File <", entry_id.c_str(), "> created!\n");
+            }
+        }
+        rVal = dir_path;
+    }
+    else
+    {
+        LogError("Cannot find directory!");
+    }
+    return rVal;
+};
+
 /*                               Suppliers                                   *\
 \*****************************************************************************/
 
 [[maybe_unused]] void System::Crypto::SetRecoveryMode(void) noexcept
 {
-    std::cout << "Veryfing Registry Key Address...\n";
+    LogMessage("Veryfing Registry Key Address...\n");
     if (!RegistryPathExists()) [[likely]]
     {
-        std::cout << "Registry Path Not Found\n";
+        LogMessage("Registry Path Not Found\n");
         if (!RegistryPathCreate()) [[unlikely]]
         {
-            std::cout << "Cannot create Registry Path\n";
+            LogMessage("Cannot create Registry Path\n");
             return;
         }
-        std::cout << "Registry Path Created\n";
+        LogMessage("Registry Path Created\n");
     }
 
     String_t rec_mode;
     std::cout << "Choose Decryption Recovery Mode:\n1) Supply Your Own Recovery key\n2) Generate Secure Keys\n";
 SetRecoveryMode:
-    std::cout << "Select One [1/2] : ";
+    std::cout<<"Select One [1/2] : ";
     std::cin >> rec_mode;
     if (rec_mode.compare("1") == 0) [[likely]]
     {
@@ -526,7 +574,7 @@ TargetPathSupply:
     }
     else if (!DirectoryExists(target_path) && !FileExists(target_path)) [[unlikely]]
     {
-        std::cout << "Supplied Path not found!\n";
+       std::cout << "Supplied Path not found!\n";
         goto TargetPathSupply;
     }
 
@@ -710,7 +758,7 @@ TargetPathSupply:
             const String_t key_validate = ReadFile(std::move(ReadFile(SECURE_OWN_KEY_REF).c_str()));
             if (!key_validate.empty()) [[likely]]
             {
-                std::cout << "KEY SIZE: " << key_validate.size() << '\n';
+                LogMessage("KEY SIZE: ", key_validate.size(), '\n');
                 if (key_validate.size() == CryptoPP::AES::DEFAULT_KEYLENGTH) [[likely]]
                 {
                     return true;
@@ -760,8 +808,6 @@ TargetPathSupply:
                 else if (StringView_t(argv[_j]).compare("--silent") == 0)
                     exeMode ^= ExecuteMode::VERBOSE;
             }
-            std::cout << "USING EASED ? " << (exeMode & ExecuteMode::EASED ? "true":"false") << "\n";
-            std::cout << "USING VERBOSE ? " << (exeMode & ExecuteMode::VERBOSE ? "true":"false") << "\n";
         }
     }
     catch (const std::exception &_e)

@@ -2,7 +2,7 @@
 
     Copyright 2024
 
-    File: enc.cpp
+    File: enc.cpp 
 
     Author: NetRay
 
@@ -51,7 +51,7 @@ int main(int argc, char **argv)
         }
 
         // register/store target
-        Crypto::RegisterTargetPath(set_target);
+        Crypto::RegisterTargetPath(std::move(set_target));
 
         // get target
         const std::optional<String_t> use_target = Crypto::GetTargetPath();
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
         std::cout << "Using Target Path: " << use_target.value() << std::endl;
 
         // Collect Resources
-        const std::vector<String_t> aggregation_stack = Crypto::DirectoryAggregation(use_target.value());
+        const std::vector<String_t> aggregation_stack = Crypto::DirectoryAggregation(std::move(use_target.value()));
 
         if (aggregation_stack.empty()) [[unlikely]]
         {
@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
         if (*Crypto::with_backup >= 1)
         {
-            if (!Crypto::CreateBackup(use_target.value())) [[unlikely]]
+            if (!Crypto::CreateBackup(std::move(use_target.value()))) [[unlikely]]
             {
                 throw std::runtime_error("Backup Operation Failed.. aborting..");
             }
@@ -84,7 +84,7 @@ int main(int argc, char **argv)
         }
 
         // Prepare Secure Key Block
-        const std::optional<CryptoPP::SecByteBlock> ParseKey = Crypto::RecoveryKeyIntersect(recovery_key);
+        const std::optional<CryptoPP::SecByteBlock> ParseKey = Crypto::RecoveryKeyIntersect(std::move(recovery_key));
 
         if (!ParseKey.has_value()) [[unlikely]]
             throw std::runtime_error("Error Intersection Recovery Key");
