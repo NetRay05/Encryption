@@ -794,7 +794,7 @@ TargetPathSupply:
     {
         std::ifstream readFileContent(file_path.data(), std::ios::binary);
         std::ofstream writeFileContent(dest_file.data(), std::ios::binary);
-        if (!readFileContent.is_open() || !writeFileContent.is_open())
+        if (!readFileContent.is_open() || !writeFileContent.is_open()) [[unlikely]]
         {
             throw std::runtime_error("Cannot read or write to file!");
         }
@@ -804,13 +804,13 @@ TargetPathSupply:
         deflateStream.zfree = Z_NULL;
         deflateStream.opaque = Z_NULL;
 
-        if (deflateInit(&deflateStream, Z_BEST_COMPRESSION) != Z_OK)
+        if (deflateInit(&deflateStream, Z_BEST_COMPRESSION) != Z_OK) [[unlikely]]
         {
             throw std::runtime_error("Failed to initialize zlib for compression.");
         }
 
-        char inBuffer[16384];
-        char outBuffer[16384];
+        Char_t inBuffer[16384];
+        Char_t outBuffer[16384];
 
         int bytesRead = 0;
         do
@@ -869,14 +869,14 @@ TargetPathSupply:
 [[maybe_unused]] void System::Crypto::DecompressFile(const StringView_t &compressedFile, const StringView_t &decompressedFile)
 {
     std::ifstream inFile(compressedFile.data(), std::ios::binary);
-    if (!inFile.is_open())
+    if (!inFile.is_open()) [[unlikely]]
     {
         LogError("Error: Failed to open input file.\n");
         return;
     }
 
     std::ofstream outFile(decompressedFile.data(), std::ios::binary);
-    if (!outFile.is_open())
+    if (!outFile.is_open()) [[unlikely]]
     {
         LogError("Error: Failed to open output file.\n");
         inFile.close();
@@ -890,7 +890,7 @@ TargetPathSupply:
     stream.avail_in = 0;
     stream.next_in = Z_NULL;
 
-    if (inflateInit(&stream) != Z_OK)
+    if (inflateInit(&stream) != Z_OK) [[unlikely]]
     {
         LogError("Error: Failed to initialize zlib for decompression.\n");
         inFile.close();
@@ -898,8 +898,8 @@ TargetPathSupply:
         return;
     }
 
-    char inBuffer[16384];
-    char outBuffer[16384];
+    Char_t inBuffer[16384];
+    Char_t outBuffer[16384];
 
     int bytesRead = 0;
     do
@@ -988,7 +988,7 @@ TargetPathSupply:
  */
 [[maybe_unused, nodiscard]] const bool System::Crypto::GenSslKeyPair(const System::SslKeyBlock key_info)
 {
-    if (key_info.public_key.size() < 1 || key_info.private_key.size() < 1)
+    if (key_info.public_key.size() < 1 || key_info.private_key.size() < 1) [[unlikely]]
     {
         std::cout << "Ssl Public/Private key paths not supplied, please use flags --public=/path/to/public/key --private=/path/to/private/key --keysize=2048\n";
         return false;
@@ -1073,6 +1073,9 @@ TargetPathSupply:
     }
 };
 
+/**
+ * Function to use ONLY in conjuction with GenSslKeyPair to retrieve and return CLI arguments.
+*/
 [[maybe_unused, nodiscard]] const System::SslKeyBlock System::Crypto::CliSslFlagCollect(const int argc, char **argv)
 {
     SslKeyBlock _k{.private_key{}, .public_key{}, .key_size{DEFAULT_SSL_KEY_SIZE}};
