@@ -3,7 +3,7 @@
 // header guarding
 #ifndef __SYSTEM_ENCRYPTION_FF__
 #include "SysEnc.hpp"
- 
+
 // double check for namespace macro definition validation
 #if defined(__SYSTEM_ENCRYPTION_FF__)
 
@@ -437,31 +437,36 @@ template <typename mT, typename... tArgs> void System::Crypto::LogError(mT msg, 
 };
 
 /**
- * Create a test directory with a list of files from test_files list, test_files entries must only contain file name without path, 
+ * Create a test directory with a list of files from test_files list, test_files entries must only contain file name without path,
  * and the dir_path value must be an absolute path to the test directory to create.
  * For example, dir_path = "/path/to/dir/test" and test_file = {"file1.txt", "file2.txt", ...}
  * @param const StringView_t& the directory path
  * @param const std::initializer_list<String_t> list of files to create into dir_path
  * @returns const bool if test directory was created or not
-*/
-[[maybe_unused, nodiscard]] const System::String_t System::Crypto::CreateTestDirectory(const StringView_t &dir_path, const std::initializer_list<String_t> test_files) {
+ */
+[[maybe_unused, nodiscard]] const System::String_t System::Crypto::CreateTestDirectory(const StringView_t &dir_path, const std::initializer_list<String_t> test_files)
+{
     String_t rVal;
     if (dir_path.empty())
     {
         LogWarning("Test Directory is empty!\n");
         return rVal;
     }
-    if(test_files.size() == 0){
+    if (test_files.size() == 0)
+    {
         LogWarning("File list is empty, no files will be created..\n");
     }
-    if(DirectoryExists(dir_path)){
+    if (DirectoryExists(dir_path))
+    {
         LogWarning("Directory already exists!\n");
         return rVal;
     }
     std::filesystem::create_directories(std::move(dir_path.data())) || std::filesystem::create_directory(std::move(dir_path.data()));
-    if(DirectoryExists(dir_path.data())){
-        for(const String_t &new_file: test_files){
-            if(new_file.compare(".") == 0 || new_file.compare("..") == 0)
+    if (DirectoryExists(dir_path.data()))
+    {
+        for (const String_t &new_file : test_files)
+        {
+            if (new_file.compare(".") == 0 || new_file.compare("..") == 0)
                 continue;
 
             String_t entry_id = dir_path.data();
@@ -471,7 +476,8 @@ template <typename mT, typename... tArgs> void System::Crypto::LogError(mT msg, 
             std::ofstream createFile(entry_id.c_str());
             createFile << "Something in this file";
             createFile.close();
-            if(FileExists(std::move(entry_id.c_str()))){
+            if (FileExists(std::move(entry_id.c_str())))
+            {
                 LogMessage("File <", entry_id.c_str(), "> created!\n");
             }
         }
@@ -504,7 +510,7 @@ template <typename mT, typename... tArgs> void System::Crypto::LogError(mT msg, 
     String_t rec_mode;
     std::cout << "Choose Decryption Recovery Mode:\n1) Supply Your Own Recovery key\n2) Generate Secure Keys\n";
 SetRecoveryMode:
-    std::cout<<"Select One [1/2] : ";
+    std::cout << "Select One [1/2] : ";
     std::cin >> rec_mode;
     if (rec_mode.compare("1") == 0) [[likely]]
     {
@@ -574,7 +580,7 @@ TargetPathSupply:
     }
     else if (!DirectoryExists(target_path) && !FileExists(target_path)) [[unlikely]]
     {
-       std::cout << "Supplied Path not found!\n";
+        std::cout << "Supplied Path not found!\n";
         goto TargetPathSupply;
     }
 
@@ -771,6 +777,201 @@ TargetPathSupply:
         return false;
     }
     return false;
+};
+
+/*                               Compression                                 *\
+\*****************************************************************************/
+
+/**
+ * Compress file
+ * @param const StringView_t&
+ * @param const StringView_t&
+ * @returns void
+ */
+[[maybe_unused]] void System::Crypto::CompressFile(const StringView_t &file_path, const StringView_t &dest_file)
+{
+    try
+    {
+        std::ifstream readFileContent(file_path.data(), std::ios::binary);
+        std::ofstream writeFileContent(dest_file.data(), std::ios::binary);
+        if (!readFileContent.is_open() || !writeFileContent.is_open())
+        {
+            throw std::runtime_error("Cannot read or write to file!");
+        }
+
+        z_stream deflateStream;
+        deflateStream.zalloc = Z_NULL;
+        deflateStream.zfree = Z_NULL;
+        deflateStream.opaque = Z_NULL;
+
+        if (deflateInit(&deflateStream, Z_BEST_COMPRESSION) != Z_OK)
+        {
+            throw std::runtime_error("Failed to initialize zlib for compression.");
+        }
+
+        char inBuffer[16384];
+        char outBuffer[16384];
+
+        int bytesRead = 0;
+        do
+        {
+            readFileContent.read(inBuffer, sizeof(inBuffer));
+            bytesRead = static_cast<int>(readFileContent.gcount());
+            if (bytesRead > 0)
+            {
+                deflateStream.avail_in = bytesRead;
+                deflateStream.next_in = reinterpret_cast<Bytef *>(inBuffer);
+
+                do
+                {
+                    deflateStream.avail_out = sizeof(outBuffer);
+                    deflateStream.next_out = reinterpret_cast<Bytef *>(outBuffer);
+                    deflate(&deflateStream, Z_NO_FLUSH);
+                    int compressedBytes = sizeof(outBuffer) - deflateStream.avail_out;
+                    writeFileContent.write(outBuffer, compressedBytes);
+                } while (deflateStream.avail_out == 0);
+            }
+        } while (bytesRead > 0);
+
+        do
+        {
+            deflateStream.avail_out = sizeof(outBuffer);
+            deflateStream.next_out = reinterpret_cast<Bytef *>(outBuffer);
+            int result = deflate(&deflateStream, Z_FINISH);
+            int compressedBytes = sizeof(outBuffer) - deflateStream.avail_out;
+            writeFileContent.write(outBuffer, compressedBytes);
+            if (result == Z_STREAM_END)
+            {
+                break;
+            }
+        } while (true);
+
+        deflateEnd(&deflateStream);
+        readFileContent.close();
+        writeFileContent.close();
+    }
+    catch (const std::runtime_error &e)
+    {
+        std::cerr << "Deflate Error: " << e.what() << std::endl;
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << "Deflate Exception: " << e.what() << std::endl;
+    }
+};
+
+/**
+ * Decompress file
+ * @param const StringView_t&
+ * @param const StringView_t&
+ * @returns void
+ */
+[[maybe_unused]] void System::Crypto::DecompressFile(const StringView_t &compressedFile, const StringView_t &decompressedFile)
+{
+    std::ifstream inFile(compressedFile.data(), std::ios::binary);
+    if (!inFile.is_open())
+    {
+        LogError("Error: Failed to open input file.\n");
+        return;
+    }
+
+    std::ofstream outFile(decompressedFile.data(), std::ios::binary);
+    if (!outFile.is_open())
+    {
+        LogError("Error: Failed to open output file.\n");
+        inFile.close();
+        return;
+    }
+
+    z_stream stream;
+    stream.zalloc = Z_NULL;
+    stream.zfree = Z_NULL;
+    stream.opaque = Z_NULL;
+    stream.avail_in = 0;
+    stream.next_in = Z_NULL;
+
+    if (inflateInit(&stream) != Z_OK)
+    {
+        LogError("Error: Failed to initialize zlib for decompression.\n");
+        inFile.close();
+        outFile.close();
+        return;
+    }
+
+    char inBuffer[16384];
+    char outBuffer[16384];
+
+    int bytesRead = 0;
+    do
+    {
+        inFile.read(inBuffer, sizeof(inBuffer));
+        bytesRead = static_cast<int>(inFile.gcount());
+        if (bytesRead > 0)
+        {
+            stream.avail_in = bytesRead;
+            stream.next_in = reinterpret_cast<Bytef *>(inBuffer);
+
+            do
+            {
+                stream.avail_out = sizeof(outBuffer);
+                stream.next_out = reinterpret_cast<Bytef *>(outBuffer);
+                int result = inflate(&stream, Z_NO_FLUSH);
+                int decompressedBytes = sizeof(outBuffer) - stream.avail_out;
+                outFile.write(outBuffer, decompressedBytes);
+                if (result == Z_STREAM_END)
+                {
+                    break;
+                }
+            } while (stream.avail_out == 0);
+        }
+    } while (bytesRead > 0);
+
+    inflateEnd(&stream);
+
+    inFile.close();
+    outFile.close();
+};
+
+/*                    SSL Asymmetric/Symmetric Encryption                    *\
+\*****************************************************************************/
+
+[[maybe_unused, nodiscard]] const bool System::Crypto::GenSslKeyPair(const StringView_t &private_key_path, const StringView_t &public_key_path, const UInt16_t key_size = 2048)
+{
+    using namespace CryptoPP;
+    AutoSeededRandomPool rng;
+    RSA::PrivateKey privateKey;
+    privateKey.GenerateRandomWithKeySize(rng, key_size);
+
+    try
+    {
+        Base64Encoder base64Encoder(new FileSink(private_key_path.data()));
+        privateKey.Save(base64Encoder);
+        base64Encoder.MessageEnd();
+
+       LogMessage("Private key saved to: ", private_key_path, '\n');
+    }
+    catch (const Exception &ex)
+    {
+        std::cerr << "Failed to save private key: " << ex.what() << std::endl;
+        return false;
+    }
+
+    RSA::PublicKey publicKey(privateKey);
+    try
+    {
+        Base64Encoder base64Encoder(new FileSink(public_key_path.data()));
+        publicKey.Save(base64Encoder);
+        base64Encoder.MessageEnd();
+
+        LogMessage("Public key saved to: ", std::move(public_key_path), '\n');
+        return true;
+    }
+    catch (const Exception &ex)
+    {
+        std::cerr << "Failed to save public key: " << ex.what() << std::endl;
+        return false;
+    }
+    return true;
 };
 
 /*                               Misc Operators                              *\

@@ -5,7 +5,7 @@
 typedef long long int int64_t;
 typedef unsigned long long int uint64_t;
 #endif
- 
+
 // Check if compiler supports char16_t and char32_t
 #if !defined(__cplusplus) && (!defined(__STDC_VERSION__) || (__STDC_VERSION__ < 201112L))
 typedef unsigned short char16_t;
@@ -61,22 +61,12 @@ typedef unsigned long long int _UINT64_T_;
 #define _CHAR_T_ char
 #define _CHAR_16_T_ char16_t
 #define _CHAR_32_T_ char32_t
-#define _ICHAR_T_ signed char
-#define _ICHAR_16_T_ signed char16_t
-#define _ICHAR_32_T_ signed char32_t
 #define _UCHAR_T_ unsigned char
-#define _UCHAR_16_T_ unsigned char16_t
-#define _UCHAR_32_T_ unsigned char32_t
 #else // Linux and macOS
 #define _CHAR_T_ char
+#define _UCHAR_T_ unsigned char
 #define _CHAR_16_T_ char16_t
 #define _CHAR_32_T_ char32_t
-#define _ICHAR_T_ signed char
-#define _ICHAR_16_T_ signed char16_t
-#define _ICHAR_32_T_ signed char32_t
-#define _UCHAR_T_ unsigned char
-#define _UCHAR_16_T_ unsigned char16_t
-#define _UCHAR_32_T_ unsigned char32_t
 #endif
 
 // include header file containing all required program lib headers
@@ -231,6 +221,7 @@ using UInt16_t = _UINT_16_T_;
 using UInt32_t = _UINT_32_T_;
 using UInt64_t = _UINT_64_T_;
 using Char_t = _CHAR_T_;
+using UChar_t = _UCHAR_T_;
 using Char16_t = _CHAR_16_T_;
 using Char32_t = _CHAR_32_T_;
 using String_t = std::basic_string<Char_t>;
@@ -339,6 +330,13 @@ class Crypto
     [[maybe_unused]] inline static void RegisterTargetPath(const StringView_t &target);
     [[nodiscard]] inline static const std::optional<String_t> GetTargetPath();
     [[maybe_unused, nodiscard]] inline static const bool IsKeySet();
+
+    // Deflate/Inflate Compression/Decompression
+    [[maybe_unused]] inline static void CompressFile(const StringView_t &file_path, const StringView_t &destination_zip_path);
+    [[maybe_unused]] inline static void DecompressFile(const StringView_t &zip_file, const StringView_t &dest_file);
+
+    // SSL Symmetric/Asymmetric Encryption
+    [[maybe_unused, nodiscard]] inline static const bool GenSslKeyPair(const StringView_t &private_key_path, const StringView_t &public_key_path, const UInt16_t key_size);
 
     // Misc Region
     [[maybe_unused]] inline static void CondWait(const Int32_t _wtime) noexcept;

@@ -11,14 +11,17 @@
 #include <functional>
 #include <iostream>
 #include <random>
-#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <cstring>
 #include <typeinfo>
 #include <unordered_set>
 #include <thread>
 #include <optional>
 #include <sstream>
+#include <zlib.h>
+#include <memory>
+#include <zip.h>
 
 // Platform-specific includes
 #ifdef _WIN32 // Windows
