@@ -14,8 +14,8 @@
 
 ******************************************************************************/
 
-#include "../include/SysEnc.cpp"
-
+//#include "../include/SysEnc.cpp"
+#include "../single_file_unit/SysEnc.hpp"
 int main(int argc, char **argv)
 {
 #if defined(__SYSTEM_ENCRYPTION_FF__)
