@@ -935,6 +935,13 @@ TargetPathSupply:
 /*                    SSL Asymmetric/Symmetric Encryption                    *\
 \*****************************************************************************/
 
+/**
+ * Generate Ssl public/private keys, returns true if keys are created, false otherwise.
+ * @param const StringView_t& private key path
+ * @param const StringView_t& public key path
+ * @param const UInt16_t the key size to generate
+ * @returns const bool
+ */
 [[maybe_unused, nodiscard]] const bool System::Crypto::GenSslKeyPair(const StringView_t &private_key_path, const StringView_t &public_key_path, const UInt16_t key_size = 2048)
 {
     using namespace CryptoPP;
@@ -948,7 +955,7 @@ TargetPathSupply:
         privateKey.Save(base64Encoder);
         base64Encoder.MessageEnd();
 
-       LogMessage("Private key saved to: ", private_key_path, '\n');
+        LogMessage("Private key saved to: ", private_key_path, '\n');
     }
     catch (const Exception &ex)
     {
@@ -964,6 +971,55 @@ TargetPathSupply:
         base64Encoder.MessageEnd();
 
         LogMessage("Public key saved to: ", std::move(public_key_path), '\n');
+        return true;
+    }
+    catch (const Exception &ex)
+    {
+        std::cerr << "Failed to save public key: " << ex.what() << std::endl;
+        return false;
+    }
+    return true;
+};
+
+/**
+ * Generate a pair of ssl public/private keys, returns true if keys are created, false otherwise.
+ * @param const System::SslKeyBlock, block containing private/public key and key size
+ * @returns const bool
+ */
+[[maybe_unused, nodiscard]] const bool System::Crypto::GenSslKeyPair(const System::SslKeyBlock key_info)
+{
+    if (key_info.public_key.size() < 1 || key_info.private_key.size() < 1)
+    {
+        std::cout << "Ssl Public/Private key paths not supplied, please use flags --public=/path/to/public/key --private=/path/to/private/key --keysize=2048\n";
+        return false;
+    }
+    using namespace CryptoPP;
+    AutoSeededRandomPool rng;
+    RSA::PrivateKey privateKey;
+    privateKey.GenerateRandomWithKeySize(rng, key_info.key_size);
+
+    try
+    {
+        Base64Encoder base64Encoder(new FileSink(key_info.private_key.c_str()));
+        privateKey.Save(base64Encoder);
+        base64Encoder.MessageEnd();
+
+        LogMessage("Private key saved to: ", key_info.private_key.c_str(), '\n');
+    }
+    catch (const Exception &ex)
+    {
+        std::cerr << "Failed to save private key: " << ex.what() << std::endl;
+        return false;
+    }
+
+    RSA::PublicKey publicKey(privateKey);
+    try
+    {
+        Base64Encoder base64Encoder(new FileSink(key_info.public_key.c_str()));
+        publicKey.Save(base64Encoder);
+        base64Encoder.MessageEnd();
+
+        LogMessage("Public key saved to: ", key_info.public_key.c_str(), '\n');
         return true;
     }
     catch (const Exception &ex)
@@ -1015,6 +1071,42 @@ TargetPathSupply:
     {
         LogWarning("Error: Cannot retrieve argument list -> ", std::move(_e.what()));
     }
+};
+
+[[maybe_unused, nodiscard]] const System::SslKeyBlock System::Crypto::CliSslFlagCollect(const int argc, char **argv)
+{
+    SslKeyBlock _k{.private_key{}, .public_key{}, .key_size{DEFAULT_SSL_KEY_SIZE}};
+    try
+    {
+        if (argc > 1) [[likely]]
+        {
+            for (UInt16_t _j{0}; _j < argc; ++_j)
+            {
+                String_t _f = String_t(argv[_j]);
+    
+                if (_f.find("--private=") != std::string::npos)
+                {
+                    _k.private_key = _f.substr(_f.find("=")+1);
+                }
+                else if (_f.find("--public=") != std::string::npos)
+                {
+                    _k.public_key = _f.substr(_f.find("=")+1);
+                }
+                else if (_f.find("--keysize") != std::string::npos)
+                {
+                    _k.key_size = atoi(_f.substr(_f.find("=")+1).c_str());
+                }
+            }
+        }
+    }
+    catch (const std::exception &_e)
+    {
+        LogWarning("Error: Cannot retrieve argument list -> ", std::move(_e.what()));
+    }
+    std::cout << "Ssl Public Key Path: " << _k.public_key << '\n';
+    std::cout << "Ssl Private Key Path: " << _k.private_key << '\n';
+    std::cout << "Ssl Key Size: " << _k.key_size << '\n';
+    return _k;
 };
 
 /*                        Private Member Functions                           *\

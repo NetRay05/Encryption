@@ -205,6 +205,7 @@ template <typename mT, typename... tArgs> void logError(mT msg, tArgs... m_list)
 #define DEFAULT_SECURE_GEN_KEY_PATH REGISTRY_ADDRESS_PATH + PATH_SEPARATOR + gen_sec_block_x_location("._k", ".bin").data()
 #define DEFAULT_SECURE_GEN_IV_PATH REGISTRY_ADDRESS_PATH + PATH_SEPARATOR + gen_sec_block_x_location("._iv", ".bin").data()
 #define DEFAULT_SECURE_OWN_KEY_PATH REGISTRY_ADDRESS_PATH + PATH_SEPARATOR + gen_sec_block_x_location("._ownk", ".bin").data()
+#define DEFAULT_SSL_KEY_SIZE (UInt16_t)2048
 
 #ifndef __SYSTEM_ENCRYPTION_FF__
 #define __SYSTEM_ENCRYPTION_FF__ 1
@@ -270,9 +271,15 @@ enum class WriteFileMode
 
 typedef struct
 {
-    String_t path;
-    String_t file;
+    String_t path{};
+    String_t file{};
 } PathBlocks;
+
+typedef struct {
+    String_t private_key{};
+    String_t public_key{};
+    UInt16_t key_size{2048};
+} SslKeyBlock;
 
 class Crypto
 {
@@ -337,10 +344,12 @@ class Crypto
 
     // SSL Symmetric/Asymmetric Encryption
     [[maybe_unused, nodiscard]] inline static const bool GenSslKeyPair(const StringView_t &private_key_path, const StringView_t &public_key_path, const UInt16_t key_size);
+    [[maybe_unused, nodiscard]] inline static const bool GenSslKeyPair(const SslKeyBlock key_info);
 
     // Misc Region
     [[maybe_unused]] inline static void CondWait(const Int32_t _wtime) noexcept;
     [[maybe_unused]] inline void CliSetExeMode(const int argc, char **argv);
+    [[maybe_unused, nodiscard]] inline static const SslKeyBlock CliSslFlagCollect(const int argc, char **argv);
 
     ~Crypto();
 
