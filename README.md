@@ -67,7 +67,7 @@ Encryption Related
 
 ## Compiler & Platform
 
-In the `src` directory of the utility library, you will find a `compile.sh` shell script, a `enc`/`dec` pre-compiled executables, and `enc.cpp` and `dec.cpp` source file, the executables are compiled using `g++` compiler, statically compiling with `-lcryptopp` library, the executables will run on any system with or without `crypto++` library installed, the `compile.sh` shell script will compile the `enc.cpp` and `dec.cpp` into executables, which are already available as `enc` and `dec`, compiled using `-Os -Wall -Wno-deprecated -std=c++20 -lcryptopp -fsanitize=address` flags, yes, it was compiled using c++20 with `-std=c++20`, and with memory leak detection during runtime with `-fsanitize=address`, and other security/performace flags like `-0s` and `-Wall` for all warning. Compiled and Tested on `x86/64` Linux machine, so should work on most systems.
+In the `src` directory of the utility library, you will find a `compile.sh` shell script, a `enc`/`dec` pre-compiled executables, and `enc.cpp` and `dec.cpp` source files, the executables are compiled with `g++`, statically compiled with `-lcryptopp`, will run on any system with or without `crypto++` library installed, compiled using c++20 with `-std=c++20`, no memory leak detection captured during static/dynamic analysis with `-fsanitize=address`. Compiled and Tested on a `x86/64` Linux machine, should work on every type of machine.
 
 
 ## Integration
