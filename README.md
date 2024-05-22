@@ -72,7 +72,7 @@ In the `src` directory of the utility library, you will find a `compile.sh` shel
 
 ## Integration
 
-Integrete into your existing c++ code by including the source file located in the `single-unit` folder, there is only a single named SysEnc.cpp because both class prototyping, initialization and implementation are done withing a single translation unit, easier to integrate.
+Integrete into your existing c++ code by including the source file located in the `single_file_unit` folder, there is only a single named SysEnc.cpp because both class prototyping, initialization and implementation are done withing a single translation unit, easier to integrate.
 
 ## File Support
 
