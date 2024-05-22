@@ -58,7 +58,6 @@ User Interaction
 
 * SetRecoveryKey
 * SetTargetPath
-* CliSetExeMode
 
 Encryption Related
 
