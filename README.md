@@ -72,21 +72,17 @@ In the `src` directory of the utility library, you will find a `compile.sh` shel
 
 ## Integration
 
-You can integrete the utility class into your existing c++ code using `#include "SysEnc.cpp"` assuming your `SysEnc.cpp` source file is in the same directory subdivision from where is included(that would mean you extracted `SysEnc.cpp` from the `include directory` where it is located along with `SysEnc.hpp` and `header.hpp` which you should not do because `SysEnc.cpp` requires `SysEnc.hpp` and `SysEnc.hpp` requires `header.hpp`).
-If for Example, if you `downloaded` the library in your `/home/you_user_name/Documents` Directory, then you must include it from `/home/user/Documents/SysEnc/include/SysEnc.cpp` as `SysEnc.cpp` is found within the `include` folder.
-
+Integrete into your existing c++ code by including the source file located in the `single-unit` folder, there is only a single named SysEnc.cpp because both class prototyping, initialization and implementation are done withing a single translation unit, easier to integrate.
 
 ## File Support
 
-The library will work for any type of file, text or binary, doesn't matter, any path/directory will be crypted, locked down by a secure private key, that only you must know, and then use this key for decryption, make sure you don't forget the key used with `./enc` execution, or data will be inacessible until you supply the right key  to the `dec` execution.
-Examples of text files are: .txt, .csv, .log, .ini, .bat, .txt, .csv, .log, .conf, .sh, examples of binary files are: .exe, .jpg, .png, .mp3, .mp4 etc...
-
+The library will work for any type of file, text or binary, doesn't matter, any path/directory will be crypted, using a secure private key(passphrase), will be also used for Decryption so you need to store it.
 
 ## Cryptography Algorithms
 
 Here's how the process works in practice:
 
-User-supplied Secret Key: The user provides a secret key, which acts as the basis for encryption and decryption.
+User-supplied Secret Key: The user(you) provide a secret key, which acts as the basis for encryption and decryption.
 
 Key Derivation: The provided secret key undergoes a key derivation process where it's combined with additional data (in this case, a 16-byte AES secret key) using a secure hash function (SHA256). This process ensures that the final encryption key is deterministic and derived from the user-supplied key.
 
@@ -101,7 +97,7 @@ The utility employs cryptographic algorithms such as AES and CBC mode encryption
 
 ## C++ Examples
 
-Note: Most of the member functions are `static`, so you don't need an instance of System::Crypto Object for most of the possible operations.
+Note: Most of the member functions have `static` function prototyping signature, no need 4 an instance of System::Crypto Object.
 
 **Simple Instance**
 
@@ -305,7 +301,7 @@ int main(int argc, char **argv)
 ## Unit Testing
 
 For a quick test, there is a special static member function named `CreateTestDirectory`, which will create a test directory, and some files to test encryption.
-> the directory must not exists or test will fail, you can supply how many files you want with init-list argument, here creating a test directory with 2 files, the files will contain a trivial buffer, just for testint purposes.
+> the directory must not exists or test will fail, you can supply how many, here creating a test directory with 2 files, the files will contains trivial content, just for testing purposes.
 ```cpp
 // this will return the full path of the directory if successfully created, an empty string otherwise, you can use it's value for later operations like target supply.
 const String_t create_test_dir = Crypto::CreateTestDirectory("/path/to/test/dir", {"file1.txt", "file2.txt"}); 
